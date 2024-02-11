@@ -9,3 +9,117 @@ datasource db {
   provider = "mysql"
   url      = env("DB_URL")
 }
+
+model Check {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+  users      User[]    @relation("user_check_fk")
+  @@index([name])
+}
+
+model PayType {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+  users      User[]    @relation("user_pay_type_fk")
+  @@index([name])
+}
+
+model CompanyParameter {
+  id                       Int                       @id @default(autoincrement())
+  name                     String                    @unique
+  email                    String                    @unique
+  minimun_wages_salary     Decimal
+  minimun_wages_hourly     Decimal
+  created_at               DateTime?                 @default(now())
+  updated_at               DateTime?                 @updatedAt
+  deleted_at               DateTime?
+  users                    User[]                    @relation("user_company_fk")
+  pivotTimesheetTypeEvents PivotTimesheetTypeEvent[] @relation("pivot_company_params_fk")
+  @@index([email, name])
+}
+
+model Rol {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+  users      User[]    @relation("user_rol_fk")
+  @@index([name])
+}
+
+model User {
+  id                    Int                          @id @default(autoincrement())
+  name                  String                       @unique
+  password              String
+  email                 String                       @unique
+  pay_date              DateTime
+  check                 Check                        @relation("user_check_fk", fields: [check_id], references: [id])
+  rol                   Rol                          @relation("user_rol_fk", fields: [rol_id], references: [id])
+  payType               PayType                      @relation("user_pay_type_fk", fields: [pay_type_id], references: [id])
+  CompanyParams         CompanyParameter             @relation("user_company_fk", fields: [company_parameters_id], references: [id], onDelete: Cascade)
+  check_id              Int
+  rol_id                Int
+  pay_type_id           Int
+  company_parameters_id Int
+  created_at            DateTime?                    @default(now())
+  updated_at            DateTime?                    @updatedAt
+  deleted_at            DateTime?
+  pivotTimesheetTypeEvents PivotTimesheetTypeEvent[] @relation("pivot_user_fk")
+  @@index([email, name, pay_date, pay_type_id, rol_id, check_id, company_parameters_id])
+}
+
+model Timesheet {
+  id                       Int                       @id @default(autoincrement())
+  hours                    Decimal
+  created_at               DateTime?                 @default(now())
+  updated_at               DateTime?                 @updatedAt
+  deleted_at               DateTime?
+  pivotTimesheetTypeEvents PivotTimesheetTypeEvent[] @relation("pivot_timesheet_fk")
+  @@index([hours])
+}
+
+model Status {
+  id                       Int                       @id @default(autoincrement())
+  name                     String                    @unique
+  created_at               DateTime?                 @default(now())
+  updated_at               DateTime?                 @updatedAt
+  deleted_at               DateTime?
+  pivotTimesheetTypeEvents PivotTimesheetTypeEvent[] @relation("pivot_timesheet_status_fk")
+  @@index([name])
+}
+
+model TimesheetTypeEvent {
+  id         Int                                     @id @default(autoincrement())
+  name       String                                  @unique
+  created_at DateTime?                               @default(now())
+  updated_at DateTime?                               @updatedAt
+  deleted_at DateTime?
+  pivotTimesheetTypeEvents PivotTimesheetTypeEvent[] @relation("pivot_timesheet_type_fk")
+  @@index([name])
+}
+
+model PivotTimesheetTypeEvent {
+  id                       Int                @id @default(autoincrement())
+  note                     String?            @db.LongText
+  status                   Status             @relation("pivot_timesheet_status_fk", fields: [status_id], references: [id])
+  timesheet                Timesheet          @relation("pivot_timesheet_fk", fields: [timesheet_id], references: [id], onDelete: Cascade)
+  timesheet_type           TimesheetTypeEvent @relation("pivot_timesheet_type_fk", fields: [timesheet_Type_Event_id], references: [id], onDelete: Cascade)
+  user                     User               @relation("pivot_user_fk", fields: [user_id], references: [id], onDelete: Cascade)
+  companyParams            CompanyParameter   @relation("pivot_company_params_fk", fields: [company_parameter_id], references: [id], onDelete: Cascade)
+  status_id                Int
+  timesheet_id             Int
+  timesheet_Type_Event_id  Int
+  user_id                  Int
+  company_parameter_id     Int
+  created_at               DateTime?          @default(now())
+  updated_at               DateTime?          @updatedAt
+  deleted_at               DateTime?
+  @@index([status_id, timesheet_id, timesheet_Type_Event_id, user_id, company_parameter_id])
+}

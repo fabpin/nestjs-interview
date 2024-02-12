@@ -9,6 +9,9 @@
   "bin": {
     "spikey": "dist/apps/api/cli.js"
   },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
+  },
   "scripts": {
     "api:dev": "nx serve api",
     "api:build": "nx build api",
@@ -40,6 +43,7 @@
     "@swc/helpers": "~0.5.2",
     "axios": "^1.0.0",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "chalk": "^5.3.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -134,7 +138,6 @@
     "@vitest/ui": "~0.34.6",
     "autoprefixer": "10.4.13",
     "babel-jest": "^29.4.1",
-    "bcryptjs": "^2.4.3",
     "cypress": "^13.0.0",
     "esbuild": "^0.19.2",
     "eslint": "~8.48.0",
@@ -161,6 +164,7 @@
     "tailwindcss": "^3.3.0",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
+    "tsx": "^4.7.1",
     "typescript": "^5.2.2",
     "url-loader": "^4.1.1",
     "vite": "^5.0.12",

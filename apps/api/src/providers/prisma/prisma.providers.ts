@@ -16,15 +16,17 @@ import {
   ETModelByName,
   ENSModelByName,
   ETModelByEmail,
-  ENSModelByEmail } from "@ocmi/api/providers/prisma/TModel.enum";
+  ENSModelByEmail, IETModel
+} from "@ocmi/api/providers/prisma/TModel.enum";
 import { IUser } from "@ocmi/api/providers/prisma/interface/User.interface";
 import bcryptjs from "bcryptjs";
 import {Logger} from "@nestjs/common";
+import {IPivotTimesheetTypeEvent} from "@ocmi/api/providers/prisma/interface/PivotTimesheetTypeEvent.interface";
 export class PrismaProviders {
   private clientPrisma = new PrismaClient();
-  private model: ETModel;
+  private model: ETModel | IETModel;
   private typeOfModel: ENModel;
-  constructor( typeOfModel: ENModel, model?: ETModel) {
+  constructor( typeOfModel: ENModel, model?: ETModel | IETModel) {
     this.typeOfModel = typeOfModel;
     if(model) {
       this.model = model;
@@ -33,6 +35,7 @@ export class PrismaProviders {
 
   async create():Promise<ETModel>{
     let iUser:IUser;
+    let pivotTimesheetTypeEvent: IPivotTimesheetTypeEvent;
     if (this.model){
       switch (this.typeOfModel){
         case ENSModel.User:
@@ -42,13 +45,12 @@ export class PrismaProviders {
               name: iUser.name,
               password: bcryptjs.hashSync( iUser.password, bcryptjs.genSaltSync(10)),
               email: iUser.email,
-              pay_date: iUser.pay_date,
-              check_id: iUser.check.id,
+              pay_date: new Date(iUser.pay_date),
               rol_id: iUser.rol.id,
               pay_type_id: iUser.payType.id,
               company_parameters_id: iUser.CompanyParams.id
             },
-            include: { check: true, CompanyParams: true, rol: true, payType: true, pivotTimesheetTypeEvents:true }
+            include: { CompanyParams: true, rol: true, payType: true }
           });
         case ENSModel.Rol:
           return this.clientPrisma.rol.create({
@@ -93,11 +95,18 @@ export class PrismaProviders {
             }
           });
         case ENSModel.PivotTimesheetTypeEvent:
+          pivotTimesheetTypeEvent = this.model;
           return this.clientPrisma.pivotTimesheetTypeEvent.create({
-            data: <PivotTimesheetTypeEvent>{
-              ...this.model
+            data: {
+                note: pivotTimesheetTypeEvent.note,
+                status_id: pivotTimesheetTypeEvent.status_id,
+                check_id: pivotTimesheetTypeEvent.check_id,
+                timesheet_id: pivotTimesheetTypeEvent.timesheet_id,
+                timesheet_Type_Event_id: pivotTimesheetTypeEvent.timesheet_Type_Event_id,
+                user_id: pivotTimesheetTypeEvent.user_id,
+                company_parameter_id: pivotTimesheetTypeEvent.company_parameter_id
             },
-            include: { status: true, user: true, timesheet: true, timesheet_type: true, companyParams: true }
+            include: { status: true, user: true, timesheet: true, timesheet_type: true, companyParams: true, check: true }
           });
       }
     }else{
@@ -107,20 +116,20 @@ export class PrismaProviders {
 
   async update(id: number):Promise<ETModel>{
     let iUser:IUser;
+    let pivotTimesheetTypeEvent: IPivotTimesheetTypeEvent;
     if (this.model){
       switch (this.typeOfModel){
         case ENSModel.User:
           iUser = this.model;
           return this.clientPrisma.user.update({
-            where:{
+            where: {
               id: id
             },
             data: {
               name: iUser.name,
               password: bcryptjs.hashSync( iUser.password, bcryptjs.genSaltSync(10)),
               email: iUser.email,
-              pay_date: iUser.pay_date,
-              check_id: iUser.check.id,
+              pay_date: new Date(iUser.pay_date),
               rol_id: iUser.rol.id,
               pay_type_id: iUser.payType.id,
               company_parameters_id: iUser.CompanyParams.id
@@ -191,12 +200,19 @@ export class PrismaProviders {
             }
           });
         case ENSModel.PivotTimesheetTypeEvent:
+          pivotTimesheetTypeEvent = this.model;
           return this.clientPrisma.pivotTimesheetTypeEvent.update({
             where:{
               id: id
             },
-            data: <PivotTimesheetTypeEvent>{
-              ...this.model
+            data: {
+              note: pivotTimesheetTypeEvent.note,
+              status_id: pivotTimesheetTypeEvent.status_id,
+              check_id: pivotTimesheetTypeEvent.check_id,
+              timesheet_id: pivotTimesheetTypeEvent.timesheet_id,
+              timesheet_Type_Event_id: pivotTimesheetTypeEvent.timesheet_Type_Event_id,
+              user_id: pivotTimesheetTypeEvent.user_id,
+              company_parameter_id: pivotTimesheetTypeEvent.company_parameter_id
             },
             include: { status: true, user: true, timesheet: true, timesheet_type: true, companyParams: true }
           });
@@ -206,7 +222,7 @@ export class PrismaProviders {
     }
   }
 
-  async findByName(name: string):Promise<ETModelByName>{
+  async findByName(name: string):Promise<ETModelByName | ETModelByName[]>{
     switch (this.typeOfModel){
       case ENSModelByName.User:
         return this.clientPrisma.user.findUnique({
@@ -222,7 +238,7 @@ export class PrismaProviders {
           }
         });
       case ENSModelByName.Check:
-        return this.clientPrisma.check.findUnique({
+        return this.clientPrisma.check.findMany({
           where: {
             name: name
           }
@@ -285,7 +301,7 @@ export class PrismaProviders {
           where:{
             id: id
           },
-          include: { check: true, CompanyParams: true, rol: true, payType: true, pivotTimesheetTypeEvents:true }
+          include: { CompanyParams: true, rol: true, payType: true }
         });
       case ENSModel.PivotTimesheetTypeEvent:
         return this.clientPrisma.pivotTimesheetTypeEvent.findFirst({
@@ -404,7 +420,7 @@ export class PrismaProviders {
     switch (this.typeOfModel){
       case ENSModel.User:
         return this.clientPrisma.user.findMany({
-          include: { check: true, CompanyParams: true, rol: true, payType: true, pivotTimesheetTypeEvents:true },
+          include: { CompanyParams: true, rol: true, payType: true},
           orderBy:{
             id: 'asc'
           },
@@ -413,7 +429,7 @@ export class PrismaProviders {
         });
       case ENSModel.PivotTimesheetTypeEvent:
         return this.clientPrisma.pivotTimesheetTypeEvent.findMany({
-          include: { status: true, companyParams: true, user: true, timesheet: true, timesheet_type: true },
+          include: { status: true, companyParams: true, user: true, timesheet: true, timesheet_type: true, check: true },
           orderBy:{
             id: 'asc'
           },
@@ -477,5 +493,9 @@ export class PrismaProviders {
           skip: skip
         });
     }
+  }
+
+  async disconnect(){
+    return this.clientPrisma.$disconnect();
   }
 }

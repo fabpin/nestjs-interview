@@ -9,6 +9,16 @@ import {
   Rol,
   PivotTimesheetTypeEvent } from '@prisma/client';
 
+import { IUser } from "./interface/User.interface";
+import { IRol } from "./interface/Rol.interface";
+import { IPayType } from "./interface/PayType.interface";
+import { ICompanyParameter } from "./interface/CompanyParameters.interface";
+import { ICheck } from "./interface/Check.interface";
+import { ITimesheet } from "./interface/Timesheet.interface";
+import { ITimesheetTypeEvent } from "./interface/TimesheetTypeEvent.interface";
+import { IStatus } from "./interface/Status.interface";
+import { IPivotTimesheetTypeEvent } from "./interface/PivotTimesheetTypeEvent.interface";
+
 export type ETModel =
   CompanyParameter |
   Timesheet |
@@ -19,6 +29,17 @@ export type ETModel =
   PayType |
   Rol |
   PivotTimesheetTypeEvent;
+
+export type IETModel =
+  IUser |
+  IRol |
+  IPayType |
+  ICompanyParameter |
+  ICheck |
+  ITimesheet |
+  ITimesheetTypeEvent |
+  IStatus |
+  IPivotTimesheetTypeEvent;
 
 export type ENModel =
   'User' |

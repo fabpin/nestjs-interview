@@ -128,7 +128,10 @@ Keep in mind, this is a [Nx Monorepo](https://nx.dev/getting-started/intro), so 
 2. Install Nx CLI
 
     ```bash  
-    npm i --g nx@latest  
+    npm i --g nx@latest
+    npx prisma migrate dev --name init
+    npx prisma generate
+    tsx prisma/seed.ts
     ```  
 3. Run the following commands depending on what you want to do:
    ```bash
@@ -272,6 +275,9 @@ Ten en cuenta que esto es un Nx [Monorepo](https://nx.dev/getting-started/intro)
 
    ```bash
    npm i --g nx@latest
+   npx prisma migrate dev --name init
+   npx prisma generate
+   tsx prisma/seed.ts
    ```
 
 3. Ejecuta los siguientes comandos dependiendo de lo que quieras hacer:

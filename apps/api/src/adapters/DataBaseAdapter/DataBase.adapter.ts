@@ -2,6 +2,7 @@ import { TypeProvider, ETypeProvider } from './TDataBase.enum';
 import { DataBaseInterface } from "@ocmi/api/adapters/DataBaseAdapter/IDataBase.interface";
 import {ENModel, ETModel, ETModelByEmail, ETModelByName} from "@ocmi/api/providers/prisma/TModel.enum";
 import { PrismaAdapter } from "@ocmi/api/adapters/DataBaseAdapter/Prisma/Prisma.adapter";
+import {PivotTimesheetTypeEvent} from "@prisma/client";
 
 export class DataBaseAdapter implements DataBaseInterface {
   private typeProvider: TypeProvider;
@@ -60,6 +61,10 @@ export class DataBaseAdapter implements DataBaseInterface {
       case ETypeProvider.PRISMA:
         return this.prismaAdapter.update(id);
     }
+  }
+
+  findPivotTimeSheeetCheck(id: number): Promise<PivotTimesheetTypeEvent> {
+    return this.prismaAdapter.findPivotTimeSheeetCheck(id);
   }
 
   async disconnect(): Promise<void> {

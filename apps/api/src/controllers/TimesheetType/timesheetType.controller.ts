@@ -1,13 +1,42 @@
-import { Controller, Get, Post, Put, Delete, Body, Res, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Res,
+  Param,
+  UseGuards,
+  NestModule,
+  MiddlewareConsumer, RequestMethod
+} from '@nestjs/common';
 import { Response } from 'express';
 import { TimesheetTypeEvent } from "@prisma/client";
 import { PrismaService } from "@ocmi/api/services/Prisma/PrismaService.service";
-import {ETModel} from "@ocmi/api/providers/prisma/TModel.enum";
+import { ETModel } from "@ocmi/api/providers/prisma/TModel.enum";
+import { CustomerRolGuard } from "@ocmi/api/guards/Rol/CustomerRol.guard";
+import { ValidateNameAlphabeticMiddleware } from "@ocmi/api/middleware/common/validateNameOnly.middleware";
+import { VerifiedIDToUpdateTimeSheetTypeMiddleware } from "@ocmi/api/middleware/TimeSheetType/VerifiedIDToUpdateTimeSheetType.middleware";
 
 @Controller('timesheet_type')
-export class TimesheetTypeController {
+export class TimesheetTypeController implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(
+        ValidateNameAlphabeticMiddleware,
+        VerifiedIDToUpdateTimeSheetTypeMiddleware
+      )
+      .forRoutes(
+        { path: 'timesheet_type', method: RequestMethod.POST },
+        { path: 'timesheet_type', method: RequestMethod.PUT }
+      )
+      .apply(VerifiedIDToUpdateTimeSheetTypeMiddleware)
+      .forRoutes({ path: 'timesheet_type', method: RequestMethod.DELETE });
+  }
   protected prismaService: PrismaService;
 
+  @UseGuards(CustomerRolGuard)
   @Get()
   async getTimeSheetType(@Res() res: Response){
     this.prismaService = new PrismaService('TimesheetTypeEvent');
@@ -16,6 +45,7 @@ export class TimesheetTypeController {
     res.status(200).json(checks);
   }
 
+  @UseGuards(CustomerRolGuard)
   @Post()
   async createTimeSheetType(@Body() timesheetTypeEvent: TimesheetTypeEvent, @Res() res: Response){
     this.prismaService = new PrismaService('TimesheetTypeEvent', timesheetTypeEvent);
@@ -24,6 +54,7 @@ export class TimesheetTypeController {
     res.status(200).json(checkSaved);
   }
 
+  @UseGuards(CustomerRolGuard)
   @Put(':id')
   async updateTimeSheetType(@Param('id') id: string, @Body() timesheetTypeEvent: TimesheetTypeEvent, @Res() res: Response){
     this.prismaService = new PrismaService('TimesheetTypeEvent', timesheetTypeEvent);
@@ -32,6 +63,7 @@ export class TimesheetTypeController {
     res.status(200).json(checkSaved);
   }
 
+  @UseGuards(CustomerRolGuard)
   @Delete(':id')
   async deleteTimeSheetType(@Param('id') id: string, @Res() res: Response){
     this.prismaService = new PrismaService('TimesheetTypeEvent');

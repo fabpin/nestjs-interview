@@ -2,6 +2,7 @@ import {ETModel, ETModelByName, ETModelByEmail} from "@ocmi/api/providers/prisma
 import { PrismaServiceAbstract } from "./PrismaService.abstract";
 import {Logger} from "@nestjs/common";
 import { Injectable } from '@nestjs/common';
+import {PivotTimesheetTypeEvent} from "@prisma/client/default";
 
 @Injectable()
 export class PrismaService extends PrismaServiceAbstract {
@@ -66,6 +67,15 @@ export class PrismaService extends PrismaServiceAbstract {
                  Logger.error(error);
                  throw new Error('Error on update');
                });
+  }
+
+  async findPivotTimeSheeetCheck(id: number): Promise<PivotTimesheetTypeEvent> {
+    return await this.prismaAdapter
+      .findPivotTimeSheeetCheck(id)
+      .catch(error => {
+        Logger.error(error);
+        throw new Error('Error on find pivot');
+      });
   }
 
   async disconnect(): Promise<void> {

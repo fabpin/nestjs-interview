@@ -1,4 +1,5 @@
 import {ETModel, ETModelByEmail, ETModelByName} from "@ocmi/api/providers/prisma/TModel.enum";
+import {PivotTimesheetTypeEvent} from "@prisma/client";
 
 export interface DataBaseInterface {
   create():Promise<void | ETModel>
@@ -8,5 +9,6 @@ export interface DataBaseInterface {
   findById(id: number):Promise<ETModel>
   delete(id: number):Promise<ETModel>
   pagination(take?:number, skip?:number):Promise<ETModel[]>
+  findPivotTimeSheeetCheck(id: number):Promise<PivotTimesheetTypeEvent>
   disconnect():Promise<void>
 }

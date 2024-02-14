@@ -127,6 +127,7 @@ CREATE TABLE `PivotTimesheetTypeEvent` (
     `updated_at` DATETIME(3) NULL,
     `deleted_at` DATETIME(3) NULL,
 
+    UNIQUE INDEX `PivotTimesheetTypeEvent_check_id_key`(`check_id`),
     INDEX `PivotTimesheetTypeEvent_status_id_timesheet_id_timesheet_Typ_idx`(`status_id`, `timesheet_id`, `timesheet_Type_Event_id`, `user_id`, `company_parameter_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

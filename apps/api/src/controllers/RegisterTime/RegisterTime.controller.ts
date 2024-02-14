@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Res, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Res,
+  Param,
+  UseGuards,
+  NestModule,
+  MiddlewareConsumer, RequestMethod
+} from '@nestjs/common';
 import { Response } from 'express';
 import { Prisma, PivotTimesheetTypeEvent } from "@prisma/client";
 import { IPivotTimesheetTypeEvent } from "@ocmi/api/providers/prisma/interface/PivotTimesheetTypeEvent.interface";
@@ -7,9 +18,34 @@ import { PrismaService } from "@ocmi/api/services/Prisma/PrismaService.service";
 import { ETModel } from "@ocmi/api/providers/prisma/TModel.enum";
 import { RegisterTimeDto } from "@ocmi/api/controllers/RegisterTime/DTO/RegisterTime.dto";
 import { ICheck } from "@ocmi/api/providers/prisma/interface/Check.interface";
+import { CustomerRolGuard } from "@ocmi/api/guards/Rol/CustomerRol.guard";
+import { RegisterTimePostMiddleware } from "@ocmi/api/middleware/RegisterTime/registerTimePost.middleware";
+import { RegisterTimePutMiddleware } from "@ocmi/api/middleware/RegisterTime/registerTimePut.middleware";
+import { VerifiedNameToUpdateRegisterTimeMiddleware } from "@ocmi/api/middleware/RegisterTime/VerifiedNameToUpdateRegisterTime.middleware";
+import { VerifiedStatusToUpdateRegisterTimeMiddleware } from "@ocmi/api/middleware/RegisterTime/VerifiedStatusToUpdateRegisterTime.middleware";
+import { VerifiedTimeSheetTypeToUpdateRegisterTimeMiddleware } from "@ocmi/api/middleware/RegisterTime/VerifiedTimeSheetTypeToUpdateRegisterTime.middleware";
+import { VerifiedUserToUpdateCheckMiddleware } from "@ocmi/api/middleware/Check/VerifiedUserToUpdateCheck.middleware";
 
 @Controller('register_time')
-export class RegisterTimeController {
+export class RegisterTimeController implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(
+        RegisterTimePostMiddleware,
+        VerifiedNameToUpdateRegisterTimeMiddleware,
+        VerifiedStatusToUpdateRegisterTimeMiddleware,
+        VerifiedTimeSheetTypeToUpdateRegisterTimeMiddleware,
+        VerifiedUserToUpdateCheckMiddleware
+      )
+      .forRoutes({ path: 'register_time', method: RequestMethod.POST })
+      .apply(
+        RegisterTimePutMiddleware,
+        VerifiedStatusToUpdateRegisterTimeMiddleware,
+        VerifiedTimeSheetTypeToUpdateRegisterTimeMiddleware,
+        VerifiedUserToUpdateCheckMiddleware
+      )
+      .forRoutes({ path: 'register_time', method: RequestMethod.PUT });
+  }
   protected prismaService: PrismaService;
   protected prismaServiceTimeSheet: PrismaService;
   protected prismaServiceUser: PrismaService;
@@ -24,6 +60,7 @@ export class RegisterTimeController {
   constructor() {
   }
 
+  @UseGuards(CustomerRolGuard)
   @Get()
   async getRegisterTime(@Res() res: Response){
     this.prismaService = new PrismaService('PivotTimesheetTypeEvent');
@@ -32,6 +69,7 @@ export class RegisterTimeController {
     res.status(200).json(payPivotTimesheetTypeEvent);
   }
 
+  @UseGuards(CustomerRolGuard)
   @Post()
   async createRegisterTime(@Body() registerTimeDto: RegisterTimeDto, @Res() res: Response){
     this.pivotTimesheetTypeEvent = registerTimeDto;
@@ -80,6 +118,7 @@ export class RegisterTimeController {
     res.status(200).json(pivotTimesheetTypeEventSaved);
   }
 
+  @UseGuards(CustomerRolGuard)
   @Put(':id')
   async updateRegisterTime(@Param('id') id: string, @Body() pivotTimesheetTypeEvent: PivotTimesheetTypeEvent, @Res() res: Response){
     this.prismaService = new PrismaService('PivotTimesheetTypeEvent');

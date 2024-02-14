@@ -134,7 +134,7 @@ export class PrismaProviders {
               pay_type_id: iUser.payType.id,
               company_parameters_id: iUser.CompanyParams.id
             },
-            include: { check: true, CompanyParams: true, rol: true, payType: true, pivotTimesheetTypeEvents:true }
+            include: { CompanyParams: true, rol: true, payType: true }
           });
         case ENSModel.Rol:
           return this.clientPrisma.rol.update({
@@ -214,7 +214,7 @@ export class PrismaProviders {
               user_id: pivotTimesheetTypeEvent.user_id,
               company_parameter_id: pivotTimesheetTypeEvent.company_parameter_id
             },
-            include: { status: true, user: true, timesheet: true, timesheet_type: true, companyParams: true }
+            include: { status: true, user: true, timesheet: true, timesheet_type: true, companyParams: true, check: true }
           });
       }
     }else{
@@ -229,7 +229,7 @@ export class PrismaProviders {
           where: {
             name: name
           },
-          include: { check: true, CompanyParams: true, rol: true, payType: true, pivotTimesheetTypeEvents:true }
+          include: { CompanyParams: true, rol: true, payType: true }
         });
       case ENSModelByName.Rol:
         return this.clientPrisma.rol.findUnique({
@@ -280,7 +280,7 @@ export class PrismaProviders {
           where: {
             email: email
           },
-          include: { check: true, CompanyParams: true, rol: true, payType: true, pivotTimesheetTypeEvents:true }
+          include: { CompanyParams: true, rol: true, payType: true }
         });
       case ENSModelByEmail.CompanyParameter:
         return this.clientPrisma.companyParameter.findUnique({
@@ -493,6 +493,14 @@ export class PrismaProviders {
           skip: skip
         });
     }
+  }
+
+  async findPivotTimeSheeetCheck(id: number):Promise<PivotTimesheetTypeEvent>{
+    return this.clientPrisma.pivotTimesheetTypeEvent.findFirst({
+      where:{
+        check_id: id
+      }
+    });
   }
 
   async disconnect(){

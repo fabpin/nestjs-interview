@@ -1,15 +1,44 @@
-import { Controller, Get, Post, Put, Delete, Body, Res, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Res,
+  Param,
+  UseGuards,
+  NestModule,
+  MiddlewareConsumer, RequestMethod
+} from '@nestjs/common';
 import { Response } from 'express';
 import { Rol } from "@prisma/client";
 import { PrismaService } from "@ocmi/api/services/Prisma/PrismaService.service";
 import { ETModel } from "@ocmi/api/providers/prisma/TModel.enum";
+import { AdminRolGuard } from "@ocmi/api/guards/Rol/AdminRol.guard";
+import { ValidateNameAlphabeticMiddleware } from "@ocmi/api/middleware/common/validateNameOnly.middleware";
+import { VerifiedIDToUpdateRolMiddleware } from "@ocmi/api/middleware/Rol/VerifiedIDToUpdateRol.middleware";
+import { VerifiedNameToUpdateRolMiddleware } from "@ocmi/api/middleware/Rol/VerifiedNameToUpdateRol.middleware";
 
 @Controller('rol')
-export class RolController {
+export class RolController implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(ValidateNameAlphabeticMiddleware, VerifiedNameToUpdateRolMiddleware)
+      .forRoutes(
+        { path: 'rol', method: RequestMethod.POST },
+        { path: 'rol', method: RequestMethod.PUT }
+      )
+      .apply(VerifiedIDToUpdateRolMiddleware)
+      .forRoutes(
+        { path: 'rol', method: RequestMethod.PUT },
+        { path: 'rol', method: RequestMethod.DELETE });
+  }
   protected prismaService: PrismaService;
   constructor() {
   }
 
+  @UseGuards(AdminRolGuard)
   @Get()
   async getRol(@Res() res: Response){
     this.prismaService = new PrismaService('Rol');
@@ -18,6 +47,7 @@ export class RolController {
     res.status(200).json(roles);
   }
 
+  @UseGuards(AdminRolGuard)
   @Post()
   async createRol(@Body() rol: Rol, @Res() res: Response){
     this.prismaService = new PrismaService('Rol', rol);
@@ -26,6 +56,7 @@ export class RolController {
     res.status(200).json(rolSaved);
   }
 
+  @UseGuards(AdminRolGuard)
   @Put(':id')
   async updateRol(@Param('id') id: string, @Body() rol: Rol, @Res() res: Response){
     this.prismaService = new PrismaService('Rol', rol);
@@ -34,6 +65,7 @@ export class RolController {
     res.status(200).json(rolSaved);
   }
 
+  @UseGuards(AdminRolGuard)
   @Delete(':id')
   async deleteRol(@Param('id') id: string, @Res() res: Response){
     this.prismaService = new PrismaService('Rol');

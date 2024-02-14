@@ -1,4 +1,4 @@
-import { Module, NestModule, RequestMethod, MiddlewareConsumer } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,12 +11,8 @@ import { RegisterTimeModule } from "@ocmi/api/controllers/RegisterTime/RegisterT
 import { TimesheetModule } from "@ocmi/api/controllers/Timesheet/timesheet.module";
 import { TimesheetTypeModule } from "@ocmi/api/controllers/TimesheetType/timesheetType.module";
 import { AuthModule } from "@ocmi/api/controllers/Auth/auth.module";
-import { CheckStructureMiddleware } from "@ocmi/api/middleware/check.middleware";
-import { ValidateNameAlphabeticMiddleware } from "@ocmi/api/middleware/common/validateNameOnly.middleware";
-import { UserMiddleware } from "@ocmi/api/middleware/user.middleware";
-import { RegisterTimePostMiddleware } from "@ocmi/api/middleware/RegisterTime/registerTimePost.middleware";
-import { RegisterTimePutMiddleware } from "@ocmi/api/middleware/RegisterTime/registerTimePut.middleware";
-import { TimeSheetMiddleware } from "@ocmi/api/middleware/timesheet.middleware";
+import { AuthGuard } from "@ocmi/api/guards/Auth.guard";
+import {APP_GUARD} from "@nestjs/core";
 // import { HelloCommand } from '@ocmi/api/commands/hello.command';
 // import { PrismaModule } from 'nestjs-prisma';
 
@@ -36,37 +32,11 @@ import { TimeSheetMiddleware } from "@ocmi/api/middleware/timesheet.middleware";
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    }
     // HelloCommand
   ],
 })
-export class AppModule implements NestModule{
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(CheckStructureMiddleware)
-      .forRoutes(
-        { path: 'checks', method: RequestMethod.POST },
-        { path: 'checks', method: RequestMethod.PUT }
-      ).apply(ValidateNameAlphabeticMiddleware)
-      .forRoutes(
-        { path: 'pay_type', method: RequestMethod.POST },
-        { path: 'pay_type', method: RequestMethod.PUT },
-        { path: 'rol', method: RequestMethod.POST },
-        { path: 'rol', method: RequestMethod.PUT },
-        { path: 'timesheet_type', method: RequestMethod.POST },
-        { path: 'timesheet_type', method: RequestMethod.PUT }
-      ).apply(UserMiddleware)
-      .forRoutes(
-        { path: 'users', method: RequestMethod.POST },
-        { path: 'users', method: RequestMethod.PUT }
-      )
-      .apply(RegisterTimePostMiddleware)
-      .forRoutes(
-        { path: 'register_time', method: RequestMethod.POST }
-      ).apply(RegisterTimePutMiddleware)
-      .forRoutes(
-        { path: 'register_time', method: RequestMethod.PUT }
-      )
-      .apply(TimeSheetMiddleware)
-      .forRoutes({ path: 'timesheet', method: RequestMethod.PUT });
-  }
-}
+export class AppModule {}

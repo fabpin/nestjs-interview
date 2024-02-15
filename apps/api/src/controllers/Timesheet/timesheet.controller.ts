@@ -8,7 +8,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Timesheet } from "@prisma/client";
@@ -17,6 +17,7 @@ import { ETModel } from "@ocmi/api/providers/prisma/TModel.enum";
 import { CustomerRolGuard } from "@ocmi/api/guards/Rol/CustomerRol.guard";
 import { TimeSheetMiddleware } from "@ocmi/api/middleware/TimeSheet/timesheet.middleware";
 import { VerifiedIDToUpdateTimeSheetMiddleware } from "@ocmi/api/middleware/TimeSheet/VerifiedIDToUpdateTimeSheet.middleware";
+import { ValidatePaginationMiddleware } from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('timesheet')
 export class TimesheetController implements NestModule {
@@ -25,17 +26,20 @@ export class TimesheetController implements NestModule {
       .apply(TimeSheetMiddleware, VerifiedIDToUpdateTimeSheetMiddleware)
       .forRoutes({ path: 'timesheet', method: RequestMethod.PUT })
       .apply(VerifiedIDToUpdateTimeSheetMiddleware)
-      .forRoutes({ path: 'timesheet', method: RequestMethod.DELETE });
+      .forRoutes({ path: 'timesheet', method: RequestMethod.DELETE })
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'company_parameters', method: RequestMethod.GET });
   }
   protected prismaService: PrismaService;
 
   @UseGuards(CustomerRolGuard)
   @Get()
-  async getTimesheet(@Res() res: Response){
+  async getTimesheet(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('Timesheet');
-    const checks:ETModel[] = await this.prismaService.pagination();
+    const checks:ETModel[] = await this.prismaService.pagination(take, skip);
     await this.prismaService.disconnect();
-    res.status(200).json(checks);
+    return res.status(200).json(checks);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -44,7 +48,7 @@ export class TimesheetController implements NestModule {
     this.prismaService = new PrismaService('Timesheet', timesheet);
     const checkSaved:ETModel = await this.prismaService.update(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(checkSaved);
+    return res.status(200).json(checkSaved);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -53,6 +57,6 @@ export class TimesheetController implements NestModule {
     this.prismaService = new PrismaService('Timesheet');
     const checkDeleted:ETModel = await this.prismaService.delete(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(checkDeleted);
+    return res.status(200).json(checkDeleted);
   }
 }

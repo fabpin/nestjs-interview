@@ -424,8 +424,8 @@ export class PrismaProviders {
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.PivotTimesheetTypeEvent:
         return this.clientPrisma.pivotTimesheetTypeEvent.findMany({
@@ -433,64 +433,64 @@ export class PrismaProviders {
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.Rol:
         return this.clientPrisma.rol.findMany({
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.PayType:
         return this.clientPrisma.payType.findMany({
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.Check:
         return this.clientPrisma.check.findMany({
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.Status:
         return this.clientPrisma.status.findMany({
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.TimesheetTypeEvent:
         return this.clientPrisma.timesheetTypeEvent.findMany({
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.Timesheet:
         return this.clientPrisma.timesheet.findMany({
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
       case ENSModel.CompanyParameter:
         return this.clientPrisma.companyParameter.findMany({
           orderBy:{
             id: 'asc'
           },
-          take: take,
-          skip: skip
+          take: parseInt(take.toString()),
+          skip: parseInt(skip.toString())
         });
     }
   }

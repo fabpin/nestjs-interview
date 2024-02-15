@@ -9,7 +9,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Check } from "@prisma/client";
@@ -21,6 +21,7 @@ import { CheckStructureMiddleware } from "@ocmi/api/middleware/Check/check.middl
 import { VerifiedCheckUserMiddleware } from "@ocmi/api/middleware/Check/VerifiedCheckUser.middleware";
 import { VerifiedIDToUpdateCheckMiddleware } from "@ocmi/api/middleware/Check/VerifiedIDToUpdateCheck.middleware";
 import { VerifiedNameToUpdateCheckMiddleware } from "@ocmi/api/middleware/Check/VerifiedNameToUpdateCheck.middleware";
+import { ValidatePaginationMiddleware } from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('checks')
 export class CheckController implements NestModule {
@@ -39,18 +40,21 @@ export class CheckController implements NestModule {
       .forRoutes(
         { path: 'checks', method: RequestMethod.PUT },
         { path: 'checks', method: RequestMethod.DELETE }
-        );
+      )
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'checks', method: RequestMethod.GET });
   }
   protected prismaService: PrismaService;
   protected prismaServicePivotTimeSheet: PrismaService;
 
   @UseGuards(CustomerRolGuard)
   @Get()
-  async getCheck(@Res() res: Response){
+  async getCheck(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('Check');
-    const checks:ETModel[] = await this.prismaService.pagination();
+    const checks:ETModel[] = await this.prismaService.pagination(take, skip);
     await this.prismaService.disconnect();
-    res.status(200).json(checks);
+    return res.status(200).json(checks);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -59,7 +63,7 @@ export class CheckController implements NestModule {
     this.prismaService = new PrismaService('Check', check);
     const checkSaved:ETModel = await this.prismaService.create();
     await this.prismaService.disconnect();
-    res.status(200).json(checkSaved);
+    return res.status(200).json(checkSaved);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -76,7 +80,7 @@ export class CheckController implements NestModule {
     const checkSaved:ETModel = await this.prismaService.update(parseInt(id));
     await this.prismaService.disconnect();
     await this.prismaServicePivotTimeSheet.disconnect();
-    res.status(200).json(checkSaved);
+    return res.status(200).json(checkSaved);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -85,6 +89,6 @@ export class CheckController implements NestModule {
     this.prismaService = new PrismaService('Check');
     const checkDeleted:ETModel = await this.prismaService.delete(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(checkDeleted);
+    return res.status(200).json(checkDeleted);
   }
 }

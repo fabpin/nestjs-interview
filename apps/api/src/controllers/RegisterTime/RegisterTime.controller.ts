@@ -8,7 +8,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Prisma, PivotTimesheetTypeEvent } from "@prisma/client";
@@ -25,6 +25,7 @@ import { VerifiedNameToUpdateRegisterTimeMiddleware } from "@ocmi/api/middleware
 import { VerifiedStatusToUpdateRegisterTimeMiddleware } from "@ocmi/api/middleware/RegisterTime/VerifiedStatusToUpdateRegisterTime.middleware";
 import { VerifiedTimeSheetTypeToUpdateRegisterTimeMiddleware } from "@ocmi/api/middleware/RegisterTime/VerifiedTimeSheetTypeToUpdateRegisterTime.middleware";
 import { VerifiedUserToUpdateCheckMiddleware } from "@ocmi/api/middleware/Check/VerifiedUserToUpdateCheck.middleware";
+import { ValidatePaginationMiddleware } from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('register_time')
 export class RegisterTimeController implements NestModule {
@@ -44,7 +45,9 @@ export class RegisterTimeController implements NestModule {
         VerifiedTimeSheetTypeToUpdateRegisterTimeMiddleware,
         VerifiedUserToUpdateCheckMiddleware
       )
-      .forRoutes({ path: 'register_time', method: RequestMethod.PUT });
+      .forRoutes({ path: 'register_time', method: RequestMethod.PUT })
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'company_parameters', method: RequestMethod.GET });
   }
   protected prismaService: PrismaService;
   protected prismaServiceTimeSheet: PrismaService;
@@ -62,9 +65,10 @@ export class RegisterTimeController implements NestModule {
 
   @UseGuards(CustomerRolGuard)
   @Get()
-  async getRegisterTime(@Res() res: Response){
+  async getRegisterTime(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('PivotTimesheetTypeEvent');
-    const payPivotTimesheetTypeEvent: ETModel[] = await this.prismaService.pagination();
+    const payPivotTimesheetTypeEvent: ETModel[] = await this.prismaService.pagination(take,skip);
     await this.prismaService.disconnect();
     res.status(200).json(payPivotTimesheetTypeEvent);
   }

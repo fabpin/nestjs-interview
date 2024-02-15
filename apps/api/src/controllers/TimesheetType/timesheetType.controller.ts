@@ -9,7 +9,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { TimesheetTypeEvent } from "@prisma/client";
@@ -18,6 +18,7 @@ import { ETModel } from "@ocmi/api/providers/prisma/TModel.enum";
 import { CustomerRolGuard } from "@ocmi/api/guards/Rol/CustomerRol.guard";
 import { ValidateNameAlphabeticMiddleware } from "@ocmi/api/middleware/common/validateNameOnly.middleware";
 import { VerifiedIDToUpdateTimeSheetTypeMiddleware } from "@ocmi/api/middleware/TimeSheetType/VerifiedIDToUpdateTimeSheetType.middleware";
+import {ValidatePaginationMiddleware} from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('timesheet_type')
 export class TimesheetTypeController implements NestModule {
@@ -32,17 +33,20 @@ export class TimesheetTypeController implements NestModule {
         { path: 'timesheet_type', method: RequestMethod.PUT }
       )
       .apply(VerifiedIDToUpdateTimeSheetTypeMiddleware)
-      .forRoutes({ path: 'timesheet_type', method: RequestMethod.DELETE });
+      .forRoutes({ path: 'timesheet_type', method: RequestMethod.DELETE })
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'company_parameters', method: RequestMethod.GET });
   }
   protected prismaService: PrismaService;
 
   @UseGuards(CustomerRolGuard)
   @Get()
-  async getTimeSheetType(@Res() res: Response){
+  async getTimeSheetType(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('TimesheetTypeEvent');
-    const checks:ETModel[] = await this.prismaService.pagination();
+    const checks:ETModel[] = await this.prismaService.pagination(take, skip);
     await this.prismaService.disconnect();
-    res.status(200).json(checks);
+    return res.status(200).json(checks);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -51,7 +55,7 @@ export class TimesheetTypeController implements NestModule {
     this.prismaService = new PrismaService('TimesheetTypeEvent', timesheetTypeEvent);
     const checkSaved:ETModel = await this.prismaService.create();
     await this.prismaService.disconnect();
-    res.status(200).json(checkSaved);
+    return res.status(200).json(checkSaved);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -60,7 +64,7 @@ export class TimesheetTypeController implements NestModule {
     this.prismaService = new PrismaService('TimesheetTypeEvent', timesheetTypeEvent);
     const checkSaved:ETModel = await this.prismaService.update(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(checkSaved);
+    return res.status(200).json(checkSaved);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -69,6 +73,6 @@ export class TimesheetTypeController implements NestModule {
     this.prismaService = new PrismaService('TimesheetTypeEvent');
     const checkDeleted:ETModel = await this.prismaService.delete(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(checkDeleted);
+    return res.status(200).json(checkDeleted);
   }
 }

@@ -9,7 +9,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CompanyParameter } from "@prisma/client";
@@ -21,6 +21,7 @@ import { AdminRolGuard } from "@ocmi/api/guards/Rol/AdminRol.guard";
 import { VerifiedIDToUpdateCompanyParameterMiddleware } from "@ocmi/api/middleware/CompanyParameter/VerifiedIDToUpdateCompanyParameter.middleware";
 import { CompanyParameterMiddleware } from "@ocmi/api/middleware/CompanyParameter/CompanyParameter.middleware";
 import { VerifiedNameToUpdateCompanyParameterMiddleware } from "@ocmi/api/middleware/CompanyParameter/VerifiedNameToUpdateCompanyParameter.middleware";
+import { ValidatePaginationMiddleware } from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('company_parameters')
 export class CompanyParameterController implements NestModule {
@@ -39,7 +40,9 @@ export class CompanyParameterController implements NestModule {
       .forRoutes(
         { path: 'company_parameters', method: RequestMethod.POST },
         { path: 'company_parameters', method: RequestMethod.PUT }
-      );
+      )
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'company_parameters', method: RequestMethod.GET });
   }
   protected prismaService: PrismaService;
 
@@ -48,11 +51,12 @@ export class CompanyParameterController implements NestModule {
 
   @UseGuards(CustomerRolGuard)
   @Get()
-  async getCompanyParameter(@Res() res: Response){
+  async getCompanyParameter(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('CompanyParameter');
-    const companyParameters:ETModel[] = await this.prismaService.pagination();
+    const companyParameters:ETModel[] = await this.prismaService.pagination(take, skip);
     await this.prismaService.disconnect();
-    res.status(200).json(companyParameters);
+    return res.status(200).json(companyParameters);
   }
 
   @UseGuards(AdminRolGuard)
@@ -61,7 +65,7 @@ export class CompanyParameterController implements NestModule {
     this.prismaService = new PrismaService('CompanyParameter', companyParameter);
     const companyParameterSaved:ETModel = await this.prismaService.create();
     await this.prismaService.disconnect();
-    res.status(200).json(companyParameterSaved);
+    return res.status(200).json(companyParameterSaved);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -70,7 +74,7 @@ export class CompanyParameterController implements NestModule {
     this.prismaService = new PrismaService('CompanyParameter', companyParameter);
     const companyParameterSaved: ETModel = await this.prismaService.update(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(companyParameterSaved);
+    return res.status(200).json(companyParameterSaved);
   }
 
   @UseGuards(AdminRolGuard)
@@ -79,6 +83,6 @@ export class CompanyParameterController implements NestModule {
     this.prismaService = new PrismaService('CompanyParameter');
     const companyParameterDeleted: ETModel = await this.prismaService.delete(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(companyParameterDeleted);
+    return res.status(200).json(companyParameterDeleted);
   }
 }

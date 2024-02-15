@@ -9,7 +9,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { User } from "@prisma/client";
@@ -24,6 +24,7 @@ import { VerifiedEmailToUpdateUserMiddleware } from "@ocmi/api/middleware/User/V
 import { VerifiedPayTypeToUpdateUserMiddleware } from "@ocmi/api/middleware/User/VerifiedPayTypeToUpdateUser.middleware";
 import { VerifiedRolToUpdateUserMiddleware } from "@ocmi/api/middleware/User/VerifiedRolToUpdateUser.middleware";
 import { VerifiedCompanyParameterToUpdateUserMiddleware } from "@ocmi/api/middleware/User/VerifiedCompanyParameterToUpdateUser.middleware";
+import {ValidatePaginationMiddleware} from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('users')
 export class UserController implements NestModule {
@@ -45,7 +46,9 @@ export class UserController implements NestModule {
       .forRoutes(
         { path: 'users', method: RequestMethod.PUT },
         { path: 'users', method: RequestMethod.DELETE }
-      );;
+      )
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'company_parameters', method: RequestMethod.GET });
   }
 
   protected prismaService: PrismaService;
@@ -62,9 +65,10 @@ export class UserController implements NestModule {
 
   @UseGuards(CustomerRolGuard)
   @Get()
-  async getUser(@Res() res: Response){
+  async getUser(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('User');
-    const users: ETModel[] = await this.prismaService.pagination();
+    const users: ETModel[] = await this.prismaService.pagination(take, skip);
     await this.prismaService.disconnect();
     res.status(200).json(users);
   }

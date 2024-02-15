@@ -9,7 +9,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PayType } from "@prisma/client";
@@ -20,6 +20,7 @@ import { ValidateNameAlphabeticMiddleware } from "@ocmi/api/middleware/common/va
 import { VerifiedIDToUpdatePayTypeMiddleware } from "@ocmi/api/middleware/PayType/VerifiedIDToUpdatePayType.middleware";
 import { VerifiedNameToUpdatePayTypeMiddleware } from "@ocmi/api/middleware/PayType/VerifiedNameToUpdatePayType.middleware";
 import { AdminRolGuard } from "@ocmi/api/guards/Rol/AdminRol.guard";
+import { ValidatePaginationMiddleware } from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('pay_type')
 export class PayTypeController implements NestModule{
@@ -34,7 +35,9 @@ export class PayTypeController implements NestModule{
       .forRoutes(
         { path: 'pay_type', method: RequestMethod.POST },
         { path: 'pay_type', method: RequestMethod.PUT }
-      );
+      )
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'company_parameters', method: RequestMethod.GET });
   }
   protected prismaService: PrismaService;
   constructor() {
@@ -42,11 +45,12 @@ export class PayTypeController implements NestModule{
 
   @UseGuards(CustomerRolGuard)
   @Get()
-  async getPayType(@Res() res: Response){
+  async getPayType(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('PayType');
-    const payTypes: ETModel[] = await this.prismaService.pagination();
+    const payTypes: ETModel[] = await this.prismaService.pagination(take, skip);
     await this.prismaService.disconnect();
-    res.status(200).json(payTypes);
+    return res.status(200).json(payTypes);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -55,7 +59,7 @@ export class PayTypeController implements NestModule{
     this.prismaService = new PrismaService('PayType', payType);
     const payTypeSaved: ETModel = await this.prismaService.create();
     await this.prismaService.disconnect();
-    res.status(200).json(payTypeSaved);
+    return res.status(200).json(payTypeSaved);
   }
 
   @UseGuards(CustomerRolGuard)
@@ -64,7 +68,7 @@ export class PayTypeController implements NestModule{
     this.prismaService = new PrismaService('PayType', payType);
     const payTypeSaved: ETModel = await this.prismaService.update(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(payTypeSaved);
+    return res.status(200).json(payTypeSaved);
   }
 
   @UseGuards(AdminRolGuard)
@@ -73,6 +77,6 @@ export class PayTypeController implements NestModule{
     this.prismaService = new PrismaService('PayType');
     const payTypeSaved: ETModel = await this.prismaService.delete(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(payTypeSaved);
+    return res.status(200).json(payTypeSaved);
   }
 }

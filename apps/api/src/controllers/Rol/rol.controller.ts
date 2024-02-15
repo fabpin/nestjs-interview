@@ -9,7 +9,7 @@ import {
   Param,
   UseGuards,
   NestModule,
-  MiddlewareConsumer, RequestMethod
+  MiddlewareConsumer, RequestMethod, Query
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Rol } from "@prisma/client";
@@ -19,6 +19,7 @@ import { AdminRolGuard } from "@ocmi/api/guards/Rol/AdminRol.guard";
 import { ValidateNameAlphabeticMiddleware } from "@ocmi/api/middleware/common/validateNameOnly.middleware";
 import { VerifiedIDToUpdateRolMiddleware } from "@ocmi/api/middleware/Rol/VerifiedIDToUpdateRol.middleware";
 import { VerifiedNameToUpdateRolMiddleware } from "@ocmi/api/middleware/Rol/VerifiedNameToUpdateRol.middleware";
+import { ValidatePaginationMiddleware } from "@ocmi/api/middleware/common/ValidatePagination.middleware";
 
 @Controller('rol')
 export class RolController implements NestModule {
@@ -32,7 +33,9 @@ export class RolController implements NestModule {
       .apply(VerifiedIDToUpdateRolMiddleware)
       .forRoutes(
         { path: 'rol', method: RequestMethod.PUT },
-        { path: 'rol', method: RequestMethod.DELETE });
+        { path: 'rol', method: RequestMethod.DELETE })
+      .apply(ValidatePaginationMiddleware)
+      .forRoutes({ path: 'company_parameters', method: RequestMethod.GET });
   }
   protected prismaService: PrismaService;
   constructor() {
@@ -40,11 +43,12 @@ export class RolController implements NestModule {
 
   @UseGuards(AdminRolGuard)
   @Get()
-  async getRol(@Res() res: Response){
+  async getRol(@Res() res: Response, @Query() query){
+    const { take ,skip } = query;
     this.prismaService = new PrismaService('Rol');
-    const roles: ETModel[] = await this.prismaService.pagination();
+    const roles: ETModel[] = await this.prismaService.pagination(take, skip);
     await this.prismaService.disconnect();
-    res.status(200).json(roles);
+    return res.status(200).json(roles);
   }
 
   @UseGuards(AdminRolGuard)
@@ -53,7 +57,7 @@ export class RolController implements NestModule {
     this.prismaService = new PrismaService('Rol', rol);
     const rolSaved: ETModel = await this.prismaService.create();
     await this.prismaService.disconnect();
-    res.status(200).json(rolSaved);
+    return res.status(200).json(rolSaved);
   }
 
   @UseGuards(AdminRolGuard)
@@ -62,7 +66,7 @@ export class RolController implements NestModule {
     this.prismaService = new PrismaService('Rol', rol);
     const rolSaved: ETModel = await this.prismaService.update(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(rolSaved);
+    return res.status(200).json(rolSaved);
   }
 
   @UseGuards(AdminRolGuard)
@@ -71,6 +75,6 @@ export class RolController implements NestModule {
     this.prismaService = new PrismaService('Rol');
     const rolDeleted: ETModel = await this.prismaService.delete(parseInt(id));
     await this.prismaService.disconnect();
-    res.status(200).json(rolDeleted);
+    return res.status(200).json(rolDeleted);
   }
 }
